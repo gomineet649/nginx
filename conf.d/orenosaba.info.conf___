@@ -1,0 +1,46 @@
+#
+# A virtual host using mix of IP-, name-, and port-based configuration
+#
+
+#server {
+#    listen       8000;
+#    listen       somename:8080;
+#    server_name  somename  alias  another.alias;
+
+#    location / {
+#        root   html;
+#        index  index.html index.htm;
+#    }
+#}
+
+
+upstream unicorn {
+  server unix:/var/run/unicorn.sock;
+#  keepalive 120;
+#  server 127.0.0.1:8080;
+}
+
+server {
+  listen 80;
+  server_name orenosaba.info;
+  root /var/www/prod/public;
+#  index index.html;
+
+  access_log /var/log/nginx/sample_access.log;
+  error_log /var/log/nginx/sample_error.log; 
+
+  client_max_body_size 100m;
+#  error_page 404 /404.html;
+#  error_page 500 501 502 504 /500.html;
+  try_files @unicorn $uri $uri/index.html;
+
+  location @unicorn {
+#  location / {
+#    proxy_redirect on;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_pass http://unicorn;
+  }
+}
+
